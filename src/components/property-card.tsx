@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { PropertyWithRelations } from "@/lib/data/properties";
 import { publicListingUrl } from "@/lib/storage";
-import { annualFromMonthly, formatCurrencyNGN } from "@/lib/utils";
+import { annualFromMonthly, buildPropertyTagline, formatCurrencyNGN, formatListedAgo } from "@/lib/utils";
 
 function coverUrl(p: PropertyWithRelations): string | null {
   const images = (p.property_media ?? []).filter((m) => m.media_type === "image");
@@ -61,8 +61,10 @@ export function PropertyCard({ property: p }: { property: PropertyWithRelations 
           {formatCurrencyNGN(Number(p.rent_monthly))}
           <span className="text-xs font-normal text-zinc-500"> / month</span>
         </p>
+        <p className="text-xs text-zinc-500">{formatListedAgo(p.created_at)}</p>
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">{buildPropertyTagline(p)}</p>
         <p className="text-xs text-zinc-500">
-          ≈ {formatCurrencyNGN(annual)} per year · {p.bedrooms} bed · {p.bathrooms} bath
+          ≈ {formatCurrencyNGN(annual)} per year
           {p.size_sqm ? ` · ${p.size_sqm} m²` : ""}
         </p>
       </div>

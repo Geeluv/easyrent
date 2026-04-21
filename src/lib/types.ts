@@ -35,6 +35,7 @@ export interface PropertyRow {
   currency: string;
   amenities: string[];
   published: boolean;
+  inspection_locked: boolean;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -84,12 +85,54 @@ export const AMENITY_OPTIONS = [
   "water_tank",
   "security",
   "packing",
+  "parking_space",
   "fenced",
   "pop_ceiling",
   "wardrobe",
   "kitchen_fitted",
   "borehole",
+  "water_board",
+  "borehole_and_water_board",
   "prepaid_meter",
   "air_conditioning",
   "internet_ready",
+  "tiled_floors",
+  "running_water",
+  "balcony",
+  "en_suite",
+  "guest_toilet",
 ] as const;
+
+export interface PropertySaveRow {
+  user_id: string;
+  property_id: string;
+  created_at: string;
+}
+
+export interface PropertyInspectionWatchlistRow {
+  user_id: string;
+  property_id: string;
+  created_at: string;
+}
+
+export type InspectionBookingStatus = "pending_payment" | "paid" | "failed" | "abandoned";
+
+export interface InspectionBookingRow {
+  id: string;
+  user_id: string;
+  applicant_full_name: string;
+  applicant_address: string;
+  applicant_phone: string;
+  applicant_occupation: string;
+  applicant_state_of_origin: string;
+  applicant_relationship_status: string;
+  applicant_organization: string;
+  applicant_num_occupants: number;
+  property_count: number;
+  amount_ngn: number;
+  status: InspectionBookingStatus;
+  paystack_reference: string | null;
+  paystack_access_code: string | null;
+  created_at: string;
+  updated_at: string;
+}

@@ -53,11 +53,19 @@ export default async function ListingsPage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Homes for rent</h1>
-        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-          Rentals only — filter by location, budget, rooms, size, amenities, and keywords. Prices in Nigerian Naira.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Homes for rent</h1>
+          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            Rentals only — filter by location, budget, rooms, size, amenities, and keywords. Prices in Nigerian Naira.
+          </p>
+        </div>
+        <Link
+          href="/listings/map"
+          className="shrink-0 text-sm font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+        >
+          Open map view →
+        </Link>
       </div>
 
       <ListingFilters searchParams={sp} />

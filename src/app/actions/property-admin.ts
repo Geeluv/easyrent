@@ -36,6 +36,10 @@ export async function createPropertyAction(formData: FormData) {
   const state = String(formData.get("state") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const area = String(formData.get("area") ?? "").trim() || null;
+  const latRaw = String(formData.get("latitude") ?? "").trim();
+  const lngRaw = String(formData.get("longitude") ?? "").trim();
+  const latitude = latRaw ? Number(latRaw) : NaN;
+  const longitude = lngRaw ? Number(lngRaw) : NaN;
   const bedrooms = Number(formData.get("bedrooms"));
   const bathrooms = Number(formData.get("bathrooms"));
   const size_sqm = formData.get("size_sqm") ? Number(formData.get("size_sqm")) : null;
@@ -45,6 +49,12 @@ export async function createPropertyAction(formData: FormData) {
 
   if (!title || !state || !city) {
     return { error: "Title, state, and city are required." };
+  }
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return { error: "Latitude and longitude are required so the listing appears on the map." };
+  }
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return { error: "Latitude must be between -90 and 90, longitude between -180 and 180." };
   }
   if (!Number.isFinite(rent_monthly) || rent_monthly < 0) {
     return { error: "Valid monthly rent is required." };
@@ -64,6 +74,8 @@ export async function createPropertyAction(formData: FormData) {
       state,
       city,
       area,
+      latitude,
+      longitude,
       bedrooms: Number.isFinite(bedrooms) ? bedrooms : 1,
       bathrooms: Number.isFinite(bathrooms) ? bathrooms : 1,
       size_sqm: Number.isFinite(size_sqm as number) ? size_sqm : null,
@@ -95,6 +107,7 @@ export async function createPropertyAction(formData: FormData) {
 
   revalidatePath("/admin/listings");
   revalidatePath("/listings");
+  revalidatePath("/listings/map");
   return { ok: true as const, id: property.id };
 }
 
@@ -107,15 +120,28 @@ export async function updatePropertyAction(propertyId: string, formData: FormDat
   const state = String(formData.get("state") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const area = String(formData.get("area") ?? "").trim() || null;
+  const latRaw = String(formData.get("latitude") ?? "").trim();
+  const lngRaw = String(formData.get("longitude") ?? "").trim();
+  const latitude = latRaw ? Number(latRaw) : NaN;
+  const longitude = lngRaw ? Number(lngRaw) : NaN;
   const bedrooms = Number(formData.get("bedrooms"));
   const bathrooms = Number(formData.get("bathrooms"));
   const size_sqm = formData.get("size_sqm") ? Number(formData.get("size_sqm")) : null;
   const property_type = String(formData.get("property_type") ?? "other");
   const rent_monthly = Number(formData.get("rent_monthly"));
   const published = formData.get("published") === "on";
+  const inspection_locked = formData.get("accepting_inspections") !== "on";
 
   if (!title || !state || !city) {
     console.error("updatePropertyAction: missing title, state, or city");
+    return;
+  }
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    console.error("updatePropertyAction: invalid coordinates");
+    return;
+  }
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    console.error("updatePropertyAction: coordinates out of range");
     return;
   }
 
@@ -129,6 +155,8 @@ export async function updatePropertyAction(propertyId: string, formData: FormDat
       state,
       city,
       area,
+      latitude,
+      longitude,
       bedrooms: Number.isFinite(bedrooms) ? bedrooms : 1,
       bathrooms: Number.isFinite(bathrooms) ? bathrooms : 1,
       size_sqm: Number.isFinite(size_sqm as number) ? size_sqm : null,
@@ -136,6 +164,7 @@ export async function updatePropertyAction(propertyId: string, formData: FormDat
       rent_monthly,
       amenities,
       published,
+      inspection_locked,
       updated_at: new Date().toISOString(),
     })
     .eq("id", propertyId);
@@ -143,6 +172,11 @@ export async function updatePropertyAction(propertyId: string, formData: FormDat
   if (error) {
     console.error(error.message);
     return;
+  }
+
+  const { data: slugRow } = await supabase.from("properties").select("slug").eq("id", propertyId).maybeSingle();
+  if (slugRow?.slug) {
+    revalidatePath(`/listings/${slugRow.slug as string}`);
   }
 
   await supabase.from("property_fees").delete().eq("property_id", propertyId);
@@ -159,8 +193,9 @@ export async function updatePropertyAction(propertyId: string, formData: FormDat
   }
 
   revalidatePath("/admin/listings");
+  revalidatePath(`/admin/listings/${propertyId}/edit`);
   revalidatePath("/listings");
-  revalidatePath(`/listings`);
+  revalidatePath("/listings/map");
 }
 
 export async function registerMediaAction(

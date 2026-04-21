@@ -127,9 +127,28 @@ export async function getPropertyByIdForAdmin(id: string): Promise<PropertyWithR
   return normalizeProperty(data as PropertyWithRelations);
 }
 
-function normalizeProperty(p: PropertyWithRelations): PropertyWithRelations {
+export function normalizeProperty(p: PropertyWithRelations): PropertyWithRelations {
   const fees = [...(p.property_fees ?? [])].sort((a, b) => a.sort_order - b.sort_order);
   const media = [...(p.property_media ?? [])].sort((a, b) => a.sort_order - b.sort_order);
   const amenities = Array.isArray(p.amenities) ? p.amenities : [];
-  return { ...p, property_fees: fees, property_media: media, amenities };
+  const inspection_locked = Boolean((p as PropertyWithRelations & { inspection_locked?: boolean }).inspection_locked);
+  return { ...p, property_fees: fees, property_media: media, amenities, inspection_locked };
+}
+
+export async function listPublishedPropertiesForMap(): Promise<
+  Pick<PropertyRow, "id" | "slug" | "title" | "latitude" | "longitude" | "rent_monthly" | "city" | "state">[]
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("id, slug, title, latitude, longitude, rent_monthly, city, state")
+    .eq("published", true)
+    .not("latitude", "is", null)
+    .not("longitude", "is", null);
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return (data ?? []) as Pick<PropertyRow, "id" | "slug" | "title" | "latitude" | "longitude" | "rent_monthly" | "city" | "state">[];
 }

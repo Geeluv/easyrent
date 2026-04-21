@@ -57,6 +57,32 @@ export function CreateListingForm() {
           <input name="area" className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Latitude</span>
+          <input
+            name="latitude"
+            type="text"
+            inputMode="decimal"
+            required
+            placeholder="e.g. 6.5244"
+            className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Longitude</span>
+          <input
+            name="longitude"
+            type="text"
+            inputMode="decimal"
+            required
+            placeholder="e.g. 3.3792"
+            className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          />
+        </label>
+        <p className="text-xs text-zinc-500 sm:col-span-2">
+          Paste coordinates from Google Maps (right-click the pin → copy coordinates) or OpenStreetMap. Both values are
+          required for the public map and listing page.
+        </p>
+        <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Monthly rent (₦)</span>
           <input name="rent_monthly" type="number" min={0} required className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900" />
         </label>
@@ -115,12 +141,16 @@ export function CreateListingForm() {
       </div>
 
       <label className="block text-sm">
-        <span className="font-medium">Amenities (comma-separated keys)</span>
+        <span className="font-medium">Amenities & detail tags (comma-separated)</span>
         <input
           name="amenities"
-          placeholder="generator, water_tank, security"
+          placeholder="parking_space, borehole, water_board, guest_toilet, prepaid_meter, tiled_floors"
           className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
         />
+        <span className="mt-1 block text-xs text-zinc-500">
+          Describe what renters care about: bedrooms/toilets are fields above; add parking, water source (borehole /
+          water board), prepaid meter, POP, security, internet_ready, balcony, en_suite, and similar keys.
+        </span>
       </label>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}

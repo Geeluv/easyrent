@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getSiteUrl } from "@/lib/site-url";
 
-export function LoginForm() {
+export function LoginForm({ redirectTo = "/listings" }: { redirectTo?: string }) {
   const supabase = createClient();
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
@@ -23,7 +23,7 @@ export function LoginForm() {
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${site}/auth/callback?next=/listings`,
+        emailRedirectTo: `${site}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
       },
     });
     setLoading(false);
@@ -74,7 +74,7 @@ export function LoginForm() {
       setError(err.message);
       return;
     }
-    window.location.href = "/listings";
+    window.location.href = redirectTo;
   }
 
   return (

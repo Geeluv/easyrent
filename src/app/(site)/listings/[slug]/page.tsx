@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { ListingEngagementBar } from "@/components/listing-engagement";
+import { ListingLocationMap } from "@/components/listing-location-map";
 import { MediaCarousel } from "@/components/media-carousel";
 import { ReviewForm } from "@/components/review-form";
 import { ShareButtons } from "@/components/share-buttons";
 import { getCurrentUser } from "@/lib/auth/admin";
+import { getSavedPropertyIdsForUser, getWatchlistPropertyIdsForUser } from "@/lib/data/engagement";
 import { getPublishedPropertyBySlug } from "@/lib/data/properties";
 import { listReviewsForProperty } from "@/lib/data/reviews";
 import { getSiteUrl } from "@/lib/site-url";
 import { publicListingUrl } from "@/lib/storage";
 import { AMENITY_OPTIONS } from "@/lib/types";
-import { annualFromMonthly, formatCurrencyNGN } from "@/lib/utils";
+import { annualFromMonthly, buildPropertyTagline, formatCurrencyNGN, formatListedAgo } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +64,10 @@ export default async function ListingDetailPage(props: Props) {
   }
 
   const user = await getCurrentUser();
+  const savedIds = user ? await getSavedPropertyIdsForUser(user.id) : [];
+  const watchIds = user ? await getWatchlistPropertyIdsForUser(user.id) : [];
+  const initialSaved = savedIds.includes(p.id);
+  const initialWatchlisted = watchIds.includes(p.id);
   const reviews = await listReviewsForProperty(p.id);
   const shareUrl = `${getSiteUrl()}/listings/${p.slug}`;
 
@@ -87,11 +94,63 @@ export default async function ListingDetailPage(props: Props) {
           </p>
         </div>
         <ShareButtons url={shareUrl} title={p.title} />
+        <p className="text-sm text-amber-800 dark:text-amber-300">{formatListedAgo(p.created_at)}</p>
+        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{buildPropertyTagline(p)}</p>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {p.bedrooms} bedroom · {p.bathrooms} bathroom
-          {p.size_sqm ? ` · ${p.size_sqm} m²` : ""} · Type: {p.property_type.replace(/_/g, " ")}
+          {p.size_sqm ? `${p.size_sqm} m² · ` : ""}Type: {p.property_type.replace(/_/g, " ")}
         </p>
+        {user ? (
+          <ListingEngagementBar
+            propertyId={p.id}
+            listingSlug={p.slug}
+            initialSaved={initialSaved}
+            initialWatchlisted={initialWatchlisted}
+          />
+        ) : (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <Link href={`/login?next=${encodeURIComponent(`/listings/${p.slug}`)}`} className="font-semibold text-emerald-700 hover:underline dark:text-emerald-400">
+              Sign in
+            </Link>{" "}
+            to save this listing or add it to your inspection watchlist.
+          </p>
+        )}
       </header>
+
+      <section className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Inspection fee (Paystack)</h2>
+        {p.inspection_locked ? (
+          <p className="mt-2 text-sm text-amber-900 dark:text-amber-200">
+            This listing is not accepting new inspection bookings until the owner re-opens it after a recent paid
+            inspection request.
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+            Pay the non-refundable inspection fee to profile yourself for the landlord. You can bundle several homes in
+            one checkout — see pricing on the booking page.
+          </p>
+        )}
+        {user ? (
+          p.inspection_locked ? (
+            <span className="mt-4 inline-flex cursor-not-allowed rounded-lg bg-zinc-400 px-4 py-2 text-sm font-semibold text-white">
+              Book inspection for this listing
+            </span>
+          ) : (
+            <Link
+              href={`/inspect?ids=${encodeURIComponent(p.id)}`}
+              className="mt-4 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Book inspection for this listing
+            </Link>
+          )
+        ) : (
+          <Link
+            href={`/login?next=${encodeURIComponent(`/inspect?ids=${encodeURIComponent(p.id)}`)}`}
+            className="mt-4 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            Sign in to book inspection
+          </Link>
+        )}
+      </section>
 
       {p.description ? (
         <section className="prose prose-zinc max-w-none dark:prose-invert">
@@ -127,9 +186,17 @@ export default async function ListingDetailPage(props: Props) {
         </p>
       </section>
 
+      {p.latitude != null && p.longitude != null ? (
+        <ListingLocationMap lat={Number(p.latitude)} lng={Number(p.longitude)} label={p.title} />
+      ) : (
+        <section className="rounded-2xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+          Map location is not set for this listing yet.
+        </section>
+      )}
+
       {(p.amenities ?? []).length > 0 ? (
         <section>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Amenities</h2>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Amenities & details</h2>
           <ul className="mt-2 flex flex-wrap gap-2">
             {(p.amenities ?? []).map((a) => (
               <li

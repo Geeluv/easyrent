@@ -19,7 +19,8 @@ export function SiteHeaderNav({ isAuthenticated, isAdmin }: Props) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   useEffect(() => {
@@ -81,6 +82,23 @@ export function SiteHeaderNav({ isAuthenticated, isAdmin }: Props) {
               <Link href="/listings" className={linkClass} onClick={() => setOpen(false)}>
                 Browse listings
               </Link>
+              <Link href="/listings/map" className={linkClass} onClick={() => setOpen(false)}>
+                Map
+              </Link>
+              <Link
+                href={isAuthenticated ? "/watchlist" : "/login?next=/watchlist"}
+                className={linkClass}
+                onClick={() => setOpen(false)}
+              >
+                Watchlist
+              </Link>
+              <Link
+                href={isAuthenticated ? "/inspect" : "/login?next=/inspect"}
+                className={linkClass}
+                onClick={() => setOpen(false)}
+              >
+                Book inspection
+              </Link>
               <Link href="/artisans" className={linkClass} onClick={() => setOpen(false)}>
                 Artisans
               </Link>
@@ -116,6 +134,24 @@ export function SiteHeaderNav({ isAuthenticated, isAdmin }: Props) {
           className="text-sm font-medium text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
         >
           Browse
+        </Link>
+        <Link
+          href="/listings/map"
+          className="text-sm font-medium text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
+        >
+          Map
+        </Link>
+        <Link
+          href={isAuthenticated ? "/watchlist" : "/login?next=/watchlist"}
+          className="text-sm font-medium text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
+        >
+          Watchlist
+        </Link>
+        <Link
+          href={isAuthenticated ? "/inspect" : "/login?next=/inspect"}
+          className="text-sm font-medium text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
+        >
+          Inspect
         </Link>
         <Link
           href="/artisans"
